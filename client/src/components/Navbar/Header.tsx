@@ -1,105 +1,86 @@
-import { Button } from '@heroui/react';
+import { Button, Navbar, NavbarBrand, NavbarContent, NavbarItem } from '@heroui/react';
+
+import { CiLight } from 'react-icons/ci';
+import { MdDarkMode } from 'react-icons/md';
 import { Link, NavLink } from 'react-router-dom';
+import image from '../../assets/logo.png';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-  };
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <nav className="bg-white border-b shadow-sm dark:bg-gray-900 fixed top-0 left-0 right-0 z-50">
-      <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center justify-between">
+    <Navbar maxWidth="xl" isBordered className="fixed top-0 z-50 bg-white dark:bg-gray-900">
+      {/* LEFT */}
+      <NavbarBrand>
         <Link to="/" className="flex items-center gap-2">
-          <img src="./assets/image.png" className="h-8 w-8 rounded-full shadow" alt="SCM Logo" />
-          <span className="text-2xl font-semibold text-gray-900 dark:text-white">SCM 2.0</span>
+          <img src={image} className="h-8 w-8 rounded-full shadow" alt="SCM Logo" />
+          <span className="text-xl font-semibold text-gray-900 dark:text-white">SCM 2.0</span>
         </Link>
+      </NavbarBrand>
 
-        {/* RIGHT: menu */}
-        <div className="flex items-center gap-3">
-          {/* Contact link – always visible */}
-
-          {/* BEFORE LOGIN */}
-          {!isAuthenticated && (
-            <>
-              <NavLink
-                to="/contact"
-                className={({ isActive }) =>
-                  `hidden sm:inline-block text-sm px-3 py-1.5 rounded ${
-                    isActive ? 'text-blue-600 font-semibold' : 'text-gray-700 dark:text-gray-200 hover:text-blue-600'
-                  }`
-                }
-              >
-                Contact
+      {/* RIGHT */}
+      <NavbarContent justify="end" className="gap-2">
+        {/* BEFORE LOGIN */}
+        {!isAuthenticated && (
+          <>
+            <NavbarItem>
+              <NavLink to="/login" className={({ isActive }) => (isActive ? 'font-semibold text-blue-600' : '')}>
+                <Button size="sm" variant="flat">
+                  Login
+                </Button>
               </NavLink>
-              <NavLink
-                to="/login"
-                className={({ isActive }) =>
-                  `text-sm px-3 py-1.5 rounded ${
-                    isActive ? 'bg-gray-900 text-white' : 'bg-gray-800 text-white hover:bg-gray-700'
-                  }`
-                }
-              >
-                Login
-              </NavLink>
+            </NavbarItem>
 
-              <NavLink
-                to="/register"
-                className={({ isActive }) =>
-                  `text-sm px-3 py-1.5 rounded ${
-                    isActive ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
-                  }`
-                }
-              >
-                Signup
+            <NavbarItem>
+              <NavLink to="/register">
+                <Button size="sm" color="primary">
+                  Signup
+                </Button>
               </NavLink>
-            </>
-          )}
+            </NavbarItem>
+          </>
+        )}
 
-          {isAuthenticated && (
-            <>
-              <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  `hidden sm:inline-block text-sm px-3 py-1.5 rounded ${
-                    isActive ? 'text-blue-600 font-semibold' : 'text-gray-700 dark:text-gray-200 hover:text-blue-600'
-                  }`
-                }
-              >
+        {/* AFTER LOGIN */}
+        {isAuthenticated && (
+          <>
+            <NavbarItem>
+              <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'font-semibold text-blue-600' : '')}>
                 Dashboard
               </NavLink>
+            </NavbarItem>
 
-              <NavLink
-                to="/contacts"
-                className={({ isActive }) =>
-                  `hidden sm:inline-block text-sm px-3 py-1.5 rounded ${
-                    isActive ? 'text-blue-600 font-semibold' : 'text-gray-700 dark:text-gray-200 hover:text-blue-600'
-                  }`
-                }
-              >
+            <NavbarItem>
+              <NavLink to="/contacts" className={({ isActive }) => (isActive ? 'font-semibold text-blue-600' : '')}>
                 Contacts
               </NavLink>
+            </NavbarItem>
 
-              <Button size="sm" variant="flat" className="hidden sm:inline-flex">
+            <NavbarItem>
+              <Button size="sm" variant="flat">
                 {user?.name || 'User'}
               </Button>
+            </NavbarItem>
 
-              <Button size="sm" color="danger" onPress={handleLogout} className="hidden sm:inline-flex">
+            <NavbarItem>
+              <Button size="sm" color="danger" onPress={logout}>
                 Logout
               </Button>
-            </>
-          )}
+            </NavbarItem>
+          </>
+        )}
 
-          {/* Dark/light toggle – just UI for now */}
-          <Button size="sm" variant="bordered" className="flex items-center gap-1">
-            <i className="fa-solid fa-circle-half-stroke" />
-            <span className="text-xs">Light</span>
+        {/* THEME TOGGLE */}
+        <NavbarItem>
+          <Button size="sm" variant="bordered" isIconOnly onPress={toggleTheme}>
+            {theme === 'dark' ? <CiLight size={18} /> : <MdDarkMode size={18} />}
           </Button>
-        </div>
-      </div>
-    </nav>
+        </NavbarItem>
+      </NavbarContent>
+    </Navbar>
   );
 };
 

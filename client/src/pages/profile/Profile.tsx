@@ -1,43 +1,143 @@
-import Sidebar from '../../components/Sidebar';
+import { Button, Divider, Input, Textarea } from '@heroui/react';
+import { useState } from 'react';
+import userImage from '../../assets/profileImage.jpg';
+import api from '../../lib/axios';
 
-const fallbackImage = 'https://static-00.iconduck.com/assets.00/profile-default-icon-2048x2045-u3j7s5nj.png';
 
 const Profile = () => {
   const storedUser = localStorage.getItem('user');
   const user = storedUser ? JSON.parse(storedUser) : null;
 
-  const profilePic = user?.profilePic && user.profilePic.trim() !== '' ? user.profilePic : fallbackImage;
+  const [isEdit, setIsEdit] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState<File | null>(null);
+
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    phoneNumber: user?.phoneNumber || '',
+    about: user?.about || ''
+  });
+
+  const profilePic = user?.profilePic && user.profilePic.trim() !== '' ? user.profilePic : userImage;
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append('data', new Blob([JSON.stringify(form)], { type: 'application/json' }));
+
+      if (image) {
+        formData.append('profilePic', image);
+      }
+
+      const res = await api.put('/user/profile', formData);
+      localStorage.setItem('user', JSON.stringify(res.data));
+
+      setIsEdit(false);
+      alert('Profile updated successfully ✅');
+    } catch (err) {
+      console.error(err);
+      alert('Profile update failed ❌');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
+    <div className=" bg-gray-100 dark:bg-gray-900 pt-5 px-4 flex justify-center">
+      <div className="w-full bg-white dark:bg-gray-800 rounded-xl shadow p-6">
+        {/* HEADER */}
+        <div className="flex items-center gap-4">
+          <img
+            src={profilePic}
+            alt="Profile"
+            className="w-24 h-24 rounded-full object-cover border"
+            onError={(e) => ((e.target as HTMLImageElement).src = userImage)}
+          />
 
-      <div className="flex-1 sm:pl-64 pt-20 flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full">
-          <div className="flex flex-col items-center">
-            <img
-              src={profilePic}
-              alt="Profile"
-              className="w-44 h-44 rounded-full shadow-lg object-cover mb-4"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = fallbackImage;
-              }}
-            />
-            <h2 className="text-2xl font-semibold mb-2">{user?.name || 'User Name'}</h2>
-            <p className="text-gray-600 mb-1">{user?.email || 'user.email@example.com'}</p>
-            <p className="text-gray-600 mb-2">{user?.phoneNumber || 'Phone number not set'}</p>
-            <p className="text-gray-600 mb-4 text-center">{user?.about || 'No about info provided.'}</p>
+          <div className="flex-1">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user?.name}</h2>
+            <p className="text-sm text-gray-500">{user?.email}</p>
 
-            <div className="w-full flex justify-between">
-              <p className="text-sm text-gray-500">
-                Email Verified: <span className="font-medium text-gray-700">{user?.emailVerified ? 'YES' : 'NO'}</span>
-              </p>
-              <p className="text-sm text-gray-500">
-                Phone Verified: <span className="font-medium text-gray-700">{user?.phoneVerified ? 'YES' : 'NO'}</span>
-              </p>
-            </div>
+            {isEdit && (
+              <label className="text-xs text-blue-600 cursor-pointer hover:underline">
+                Change photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                />
+              </label>
+            )}
           </div>
         </div>
+
+        <Divider className="my-4" />
+
+        {/* VIEW MODE */}
+        {!isEdit ? (
+          <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+            <div>
+              <span className="text-gray-500">Phone</span>
+              <p className="font-medium">{user?.phoneNumber || '-'}</p>
+            </div>
+
+            <div>
+              <span className="text-gray-500">About</span>
+              <p>{user?.about || '-'}</p>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button size="sm" color="primary" onPress={() => setIsEdit(true)}>
+                Edit Profile
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* EDIT MODE */
+          <div className="space-y-3">
+            <Input
+              label="Name"
+              size="sm"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+
+            {/* EMAIL – READ ONLY */}
+            <Input
+              label="Email"
+              size="sm"
+              value={user?.email || ''}
+              isReadOnly
+              className="opacity-70 cursor-not-allowed"
+            />
+
+            <Input
+              label="Phone"
+              size="sm"
+              value={form.phoneNumber}
+              onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
+            />
+
+            <Textarea
+              label="About"
+              size="sm"
+              value={form.about}
+              onChange={(e) => setForm({ ...form, about: e.target.value })}
+            />
+
+            <div className="flex justify-end gap-2 pt-3">
+              <Button size="sm" variant="bordered" onPress={() => setIsEdit(false)}>
+                Cancel
+              </Button>
+              <Button size="sm" color="primary" isLoading={loading} onPress={handleSave}>
+                Save
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

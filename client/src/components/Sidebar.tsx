@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import userImage from '../assets/user.jpg';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 const Sidebar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -11,7 +12,11 @@ const Sidebar = () => {
     <aside className="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-50 dark:bg-gray-800 border-r">
       <div className="h-full pt-16 px-3 py-4 overflow-y-auto">
         <div className="flex flex-col items-center mb-8">
-          <img src={userImage} className="h-24 w-24 rounded-full shadow-md object-cover" alt="Profile" />
+          <img
+            src={user?.profilePic || userImage}
+            className="h-24 w-24 rounded-full shadow-md object-cover"
+            alt="Profile"
+          />
           <span className="mt-2 text-gray-600 dark:text-gray-300 text-sm">{user?.name || 'User Name'}</span>
           <span className="text-lg font-semibold dark:text-white">Welcome to SCM</span>
         </div>
@@ -59,7 +64,7 @@ const Sidebar = () => {
             <ul className="ml-4 mt-1 space-y-1">
               <li>
                 <NavLink
-                  to="/contacts/add"
+                  to="contacts/add"
                   className={({ isActive }) =>
                     `flex items-center p-2 text-sm rounded-lg ${
                       isActive
@@ -75,6 +80,7 @@ const Sidebar = () => {
               <li>
                 <NavLink
                   to="/contacts"
+                  end
                   className={({ isActive }) =>
                     `flex items-center p-2 text-sm rounded-lg ${
                       isActive
@@ -107,18 +113,12 @@ const Sidebar = () => {
           </li>
 
           <li>
-            <button
-              type="button"
-              className="w-full flex items-center p-2 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <i className="fa-solid fa-circle-half-stroke w-5 h-5 mr-3" />
-              <span>Dark / Light</span>
-            </button>
+            <ThemeToggle />
           </li>
 
           <li>
             <NavLink
-              to="/feedback"
+              to="/contactUs"
               className={({ isActive }) =>
                 `flex items-center p-2 rounded-lg ${
                   isActive
@@ -128,7 +128,7 @@ const Sidebar = () => {
               }
             >
               <i className="fa-solid fa-pen w-5 h-5 mr-3" />
-              <span>Feedback</span>
+              <span>Contact Us</span>
             </NavLink>
           </li>
 
@@ -136,7 +136,7 @@ const Sidebar = () => {
             <button
               type="button"
               onClick={logout}
-              className="w-full flex items-center p-2 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="w-full flex items-center p-2 rounded-lg text-red-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <i className="fa-solid fa-arrow-right-from-bracket w-5 h-5 mr-3" />
               <span>Logout</span>

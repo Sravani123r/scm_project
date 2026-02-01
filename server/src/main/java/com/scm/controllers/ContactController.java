@@ -1,14 +1,15 @@
 package com.scm.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.scm.dto.*;
 import com.scm.entities.Contact;
-import com.scm.entities.User;
-import com.scm.repositories.UserRepo;
 import com.scm.services.ContactService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/user/contacts")
@@ -16,43 +17,71 @@ import java.util.List;
 public class ContactController {
 
     private final ContactService contactService;
-    private final UserRepo userRepo;
 
-    @PostMapping("/save")
-    public Contact addContact(
-            @RequestBody Contact contact,
-            Authentication authentication
-    ) {
-        String email = authentication.getName();
-        return contactService.create(contact, email);
+
+    @PostMapping(
+            value = "/save",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public Contact create(
+            @RequestPart("data") String data,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            Authentication auth
+    ) throws Exception {
+
+        Contact contact = new ObjectMapper().readValue(data, Contact.class);
+        return contactService.create(contact, image, auth.getName());
     }
+
+
 
     @GetMapping
-    public List<Contact> getAll(Authentication authentication) {
-        String email=authentication.getName();
-        User user=userRepo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return contactService.getByUserId(user.getUserId());
-    }
-
-    @PutMapping("/{id}")
-    public Contact updateContact(
-            @PathVariable String id,
-            @RequestBody Contact contact,
-            Authentication authentication
+    public PageResponseDto<Contact> getAll(
+            Authentication auth,
+            @ModelAttribute ContactSearchDto dto
     ) {
-        String email = authentication.getName();
-        return contactService.update(id, contact, email);
+        Page<Contact> page = contactService.getContacts(auth.getName(), dto);
+
+        return new PageResponseDto<>(
+                page.getContent(),
+                page.getTotalElements(),
+                page.getNumber(),
+                page.getSize()
+        );
+    }
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse update(
+            @PathVariable String id,
+            @RequestPart("data") String data,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            Authentication auth
+    ) throws Exception {
+
+        Contact contact = new ObjectMapper().readValue(data, Contact.class);
+        contactService.update(id, contact, image, auth.getName());
+        return new ApiResponse("Contact updated successfully", true);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteContact(
+    public ApiResponse delete(
             @PathVariable String id,
-            Authentication authentication
+            Authentication auth
     ) {
-        String email = authentication.getName();
-        contactService.delete(id, email);
+        contactService.delete(id, auth.getName());
+        return new ApiResponse("Contact deleted successfully", true);
     }
 
+    @GetMapping("/favorites")
+    public Object getFavorites(Authentication auth) {
+        return contactService.getFavorites(auth.getName());
+    }
 
+    @PatchMapping("/{id}/favorite")
+    public ApiResponse toggleFavorite(
+            @PathVariable String id,
+            Authentication auth
+    ) {
+        contactService.toggleFavorite(id, auth.getName());
+        return new ApiResponse("Favorite updated", true);
+    }
 }

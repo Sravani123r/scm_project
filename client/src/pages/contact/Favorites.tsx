@@ -2,12 +2,17 @@ import { useSignals } from '@preact/signals-react/runtime';
 import { MdDelete, MdOutlineFavorite } from 'react-icons/md';
 import { VscEye } from 'react-icons/vsc';
 
-import { contactList, deleteContact, openViewContact, toggleFavorite } from './common/service';
+import { Button, Table, TableBody, TableCell, TableColumn, TableHeader, TableRow } from '@heroui/react';
+import { useEffect } from 'react';
+import { contactList, deleteContact, loadFavorites, openViewContact, toggleFavorite } from './common/service';
 
 export const Favorites = () => {
   useSignals();
 
-  // Only favorite contacts
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
   const favoriteContacts = contactList.value.filter((c) => c.favorite);
 
   return (
@@ -17,40 +22,41 @@ export const Favorites = () => {
       {favoriteContacts.length === 0 ? (
         <p className="text-gray-500">No favorite contacts found</p>
       ) : (
-        <table className="w-full border rounded-lg">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-center">Phone</th>
-              <th className="p-3 text-end">Action</th>
-            </tr>
-          </thead>
+        <Table className="w-full border rounded-lg">
+          <TableHeader>
+            <TableColumn>Name</TableColumn>
+            <TableColumn className="text-center">Phone</TableColumn>
+            <TableColumn align="end">Actions</TableColumn>
+          </TableHeader>
 
-          <tbody>
+          <TableBody>
             {favoriteContacts.map((contact) => (
-              <tr key={contact.id} className="border-t hover:bg-gray-50">
-                <td className="p-3">{contact.name}</td>
-                <td className="p-3 text-center">{contact.phoneNumber}</td>
+              <TableRow
+                key={contact.id}
+                className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <TableCell>{contact.name}</TableCell>
+                <TableCell className="text-center">{contact.phoneNumber}</TableCell>
 
-                <td className="p-3 text-end">
+                <TableCell className="text-end">
                   <div className="flex justify-end gap-4">
-                    {/* REMOVE FROM FAVORITES */}
-                    <button
-                      onClick={() => toggleFavorite(contact.id)}
+                    <Button
+                      onPress={() => {
+                        if (window.confirm('Remove from favorites?')) {
+                          toggleFavorite(contact.id);
+                        }
+                      }}
                       title="Remove from favorites"
-                      className="text-red-500"
+                      className="text-red-600"
                     >
                       <MdOutlineFavorite size={22} />
-                    </button>
+                    </Button>
 
-                    {/* VIEW */}
-                    <button onClick={() => openViewContact(contact)} title="View" className="text-blue-600">
+                    <Button onPress={() => openViewContact(contact)} title="View" className="text-blue-600">
                       <VscEye size={22} />
-                    </button>
+                    </Button>
 
-                    {/* DELETE */}
-                    <button
-                      onClick={() => {
+                    <Button
+                      onPress={() => {
                         if (window.confirm('Delete this contact?')) {
                           deleteContact(contact.id);
                         }
@@ -59,13 +65,13 @@ export const Favorites = () => {
                       className="text-red-600"
                     >
                       <MdDelete size={22} />
-                    </button>
+                    </Button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
     </section>
   );

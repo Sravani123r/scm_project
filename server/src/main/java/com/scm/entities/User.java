@@ -22,10 +22,12 @@ public class User {
     @Column(unique=true , nullable=false)
     private String email;
     private String password;
+
     @Column(length=1000)
     private String about;
     @Column(length = 1000)
     private String profilePic;
+    private String profilePicPublicId;
     private String phoneNumber;
     private boolean enabled=false;
     private boolean emailVerified=false;

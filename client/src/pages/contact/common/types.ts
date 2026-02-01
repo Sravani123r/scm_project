@@ -1,10 +1,11 @@
 export interface ContactForm {
-  id?: string | any;
+  id?: string |any;
   name: string;
   email: string;
   phoneNumber: string;
   address: string;
   picture?: string;
+  image?: File;
   description?: string;
   favorite: boolean;
   websiteLink?: string;
@@ -22,10 +23,11 @@ export const ContactDefaultValues: ContactForm = {
   favorite: false
 };
 
-export type ContactPage = {
-  content: ContactForm[];
-  totalPages: number;
-  totalElements: number;
-  number: number;
-  size: number;
+export type ContactPageType = {
+  data?: any;
+  total?: number;
+  skip?: number;
+  limit?: number;
+  searchTerm?: string;
 };
+

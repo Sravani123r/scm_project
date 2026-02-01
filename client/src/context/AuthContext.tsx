@@ -3,45 +3,65 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 type User = {
   name: string;
   email: string;
+  profilePic?: string;
 };
 
 type AuthContextType = {
   isAuthenticated: boolean;
   user: User | null;
-  login: (token: string, user: User) => void;
+  loading: boolean;
+  login: (accessToken: string, refreshToken: string, user: User) => void;
   logout: () => void;
 };
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true); // ⭐ important
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
     const userJson = localStorage.getItem('user');
-    if (token && userJson) {
+
+    if (accessToken && userJson) {
       setIsAuthenticated(true);
       setUser(JSON.parse(userJson));
     }
+
+    setLoading(false);
   }, []);
 
-  const login = (token: string, user: User) => {
-    localStorage.setItem('token', token);
+  const login = (accessToken: string, refreshToken: string, user: User) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(user));
+
     setIsAuthenticated(true);
     setUser(user);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.clear();
     setIsAuthenticated(false);
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        user,
+        loading,
+        login,
+        logout
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

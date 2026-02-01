@@ -1,77 +1,80 @@
 package com.scm.services.impl;
 
-
-import com.scm.dto.JwtResponse;
-import com.scm.dto.LoginRequest;
-import com.scm.dto.SignupRequest;
-import com.scm.dto.UserDto;
+import com.scm.dto.*;
 import com.scm.entities.Providers;
 import com.scm.entities.User;
 import com.scm.repositories.UserRepo;
 import com.scm.security.JwtService;
+import com.scm.services.ImageService;
 import com.scm.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepo userRepo;
-    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final ImageService imageService;
 
-
+    // ---------- REGISTER ----------
     @Override
     public UserDto registerUser(SignupRequest request) {
-        userRepo.findByEmail(request.getEmail()).ifPresent(u -> {
-            throw new RuntimeException("Email already registered!");
-        });
-            User user=User.builder()
-                    .name(request.getUserName())
-                    .email(request.getEmail())
-                    .password(passwordEncoder.encode(request.getPassword()))
-                    .phoneNumber(request.getContactNumber())
-                    .about(request.getAbout())
-                    .enabled(true)
-                    .emailVerified(false)
-                    .phoneVerified(false)
-                    .provider(Providers.SELF)
-                    .build();
 
-            User savedUser=userRepo.save(user);
+        userRepo.findByEmail(request.getEmail())
+                .ifPresent(u -> {
+                    throw new RuntimeException("Email already registered!");
+                });
 
-        return UserDto.builder()
-                .userId(savedUser.getUserId())
-                .name(savedUser.getName())
-                .email(savedUser.getEmail())
-                .phoneNumber(savedUser.getPhoneNumber())
-                .about(savedUser.getAbout())
-                .profilePic(savedUser.getProfilePic())
+        User user = User.builder()
+                .name(request.getUserName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .phoneNumber(request.getContactNumber())
+                .about(request.getAbout())
+                .enabled(true)
+                .emailVerified(false)
+                .phoneVerified(false)
+                .provider(Providers.SELF)
                 .build();
+
+        return UserDto.from(userRepo.save(user));
     }
 
+    // ---------- UPDATE PROFILE ----------
     @Override
-    public JwtResponse login(LoginRequest request) {
-        User user = userRepo.findByEmail(request.getEmail())
+    public UserDto updateProfile(
+            String email,
+            ProfileDto dto,
+            MultipartFile profilePic
+    ) {
+
+        User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+
+        if (dto.getName() != null)
+            user.setName(dto.getName());
+
+        if (dto.getPhoneNumber() != null)
+            user.setPhoneNumber(dto.getPhoneNumber());
+
+        if (dto.getAbout() != null)
+            user.setAbout(dto.getAbout());
+
+        if (profilePic != null && !profilePic.isEmpty()) {
+
+            if (user.getProfilePicPublicId() != null) {
+                imageService.delete(user.getProfilePicPublicId());
+            }
+
+            var result = imageService.upload(profilePic, "scm_profiles");
+            user.setProfilePic(result.getUrl());
+            user.setProfilePicPublicId(result.getPublicId());
         }
 
-    String token=jwtService.generateToken(user.getEmail());
-
-        return JwtResponse.builder()
-                .token(token)
-                .user(UserDto.builder()
-                        .userId(user.getUserId())
-                        .name(user.getName())
-                        .email(user.getEmail())
-                        .phoneNumber(user.getPhoneNumber())
-                        .about(user.getAbout())
-                        .build())
-        .build();
-
+        return UserDto.from(userRepo.save(user));
     }
 }

@@ -1,22 +1,27 @@
 import { Button, Input } from '@heroui/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+import { authError, authLoading, googleLogin, loginUser } from './common/service';
+import type { LoginType } from './common/types';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [error, setError] = useState('');
+  const { login, isAuthenticated } = useAuth();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginType>({
     email: '',
     password: ''
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
+    setFormData((prev: LoginType) => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
@@ -24,31 +29,23 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'Login failed');
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('user', JSON.stringify(result.user));
-      login(result.token, result.user);
+      const res = await loginUser(formData);
+
+      login(res.accessToken, res.refreshToken, res.user);
+
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+    } catch {
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg space-y-6">
-        <h2 className="text-2xl font-bold text-center">Login to Your Account</h2>
+    <div className="bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg space-y-6">
+        <h2 className="text-2xl text-white-900 mt-2 font-bold text-center">Login to Your Account</h2>
 
-        {error && <p className="text-red-600 bg-red-100 p-2 rounded text-center">{error}</p>}
+        {authError.value && <p className="text-red-600 bg-red-100 p-2 rounded text-center">{authError.value}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -75,8 +72,18 @@ const Login = () => {
             isRequired
           />
 
-          <Button color="primary" type="submit" className="w-full">
+          <Button color="primary" type="submit" className="w-full" isLoading={authLoading.value}>
             Login
+          </Button>
+
+          <Button
+            type="button"
+            variant="bordered"
+            className="w-full flex items-center justify-center gap-2"
+            onPress={googleLogin}
+          >
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" className="w-5 h-5" />
+            Sign in with Google
           </Button>
         </form>
 

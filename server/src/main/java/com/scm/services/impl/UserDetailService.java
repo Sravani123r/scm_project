@@ -25,14 +25,20 @@ public class UserDetailService implements UserDetailsService {
                         )
                 );
 
+        // 🔥 VERY IMPORTANT FIX
+        String password = user.getPassword();
+        if (password == null) {
+            password = "GOOGLE_AUTH_USER";
+        }
+
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .authorities("ROLE_USER") // for now simple role
+                .password(password)
+                .authorities("ROLE_USER")
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)
-                .disabled(!user.isEnabled()) // VERY IMPORTANT
+                .disabled(!user.isEnabled())
                 .build();
     }
 }

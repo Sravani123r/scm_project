@@ -11,6 +11,12 @@ export type LoginType = {
   password: string;
 };
 
-export type ForgotPasswordType = {
+export type AuthUser = {
+  name: string;
   email: string;
+};
+
+export type AuthResponse = {
+  accessToken: string;
+  user: any;
 };

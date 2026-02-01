@@ -9,11 +9,16 @@ import Signup from './pages/auth/Signup';
 
 import Sidebar from './components/Sidebar';
 import { useAuth } from './context/AuthContext';
+
 import AddContact from './pages/contact/ContactForm';
 import { ContactPage } from './pages/contact/ContactPage';
 import { Favorites } from './pages/contact/Favorites';
 import Dashboard from './pages/dashboard/Dashboard';
 import Profile from './pages/profile/Profile';
+
+import OAuthSuccess from './pages/auth/OAuthSuccess';
+import { AppRoutes } from './routes/AppRoutes';
+import ProtectedRoute from './routes/Route';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -23,17 +28,53 @@ function App() {
       <Header />
       {isAuthenticated && <Sidebar />}
 
-      <div className={`px-5 ${isAuthenticated ? 'sm:pl-64 pt-5' : ''}`}>
+      <div className={`px-5 pt-16 ${isAuthenticated ? 'sm:pl-64 pt-5' : ''}`}>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/contacts" element={<ContactPage />} />
-          <Route path="/contacts/add" element={<AddContact />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="*" element={<Home />} />
+          <Route path={AppRoutes.HOME} element={<Home />} />
+          <Route path={AppRoutes.LOGIN} element={<Login />} />
+          <Route path={AppRoutes.REGISTER} element={<Signup />} />
+          <Route path={AppRoutes.OAUTH_SUCCESS} element={<OAuthSuccess />} />
+          <Route
+            path={AppRoutes.DASHBOARD}
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={AppRoutes.CONTACTS}
+            element={
+              <ProtectedRoute>
+                <ContactPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={AppRoutes.ADD_CONTACT}
+            element={
+              <ProtectedRoute>
+                <AddContact />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={AppRoutes.FAVORITES}
+            element={
+              <ProtectedRoute>
+                <Favorites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path={AppRoutes.PROFILE}
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route path={AppRoutes.NOT_FOUND} element={<Home />} />
         </Routes>
       </div>
     </div>
