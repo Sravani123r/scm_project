@@ -37,12 +37,16 @@ export const signupUser = async (data: SignUpType) => {
 };
 
 export const googleLogin = () => {
-  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-  console.log('Redirecting to Google OAuth:', API_BASE_URL);
-  console.log('Full URL:', `${API_BASE_URL}/oauth2/authorization/google`);
+  if (!API_BASE_URL) {
+    console.error('Backend URL not configured!');
+    return;
+  }
+
   window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
 };
+
 
 export const logoutUser = () => {
   localStorage.clear();
