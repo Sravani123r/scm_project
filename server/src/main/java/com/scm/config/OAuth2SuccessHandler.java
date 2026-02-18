@@ -60,8 +60,14 @@ public class OAuth2SuccessHandler
                 .user(UserDto.from(user))
                 .build();
 
+        String origin = request.getHeader("origin");
+
+        if (origin == null || origin.isBlank()) {
+            origin = "https://scm-project-9v0c9vwav-sravanis-projects-dde96344.vercel.app";
+        }
+
         String redirectUrl =
-                "http://localhost:5173/oauth-success" +
+                origin + "/oauth-success" +
                         "?accessToken=" + URLEncoder.encode(jwtResponse.getAccessToken(), StandardCharsets.UTF_8) +
                         "&refreshToken=" + URLEncoder.encode(jwtResponse.getRefreshToken(), StandardCharsets.UTF_8) +
                         "&user=" + URLEncoder.encode(
@@ -70,6 +76,7 @@ public class OAuth2SuccessHandler
                 );
 
         response.sendRedirect(redirectUrl);
+
 
     }
 }
